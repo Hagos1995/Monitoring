@@ -137,6 +137,12 @@
         $Tab.Backcolor="white"
         $TabControl.Controls.Add($Tab)
 
+    #Legende 
+          $Legend = New-Object System.Windows.Forms.DataVisualization.Charting.Legend
+          $Legend.IsEquallySpacedItems = $True
+          $Legend.BorderColor = 'Black'
+          $Chart.Legends.Add($Legend)
+          $Chart.Series["Data"].LegendText = "$xx ($xy)"
 
    ######################
             
@@ -178,6 +184,50 @@
         [void]$window.ShowDialog()
 
 ##################
+
+# Beispiel für multiple form
+
+
+Add-Type -AssemblyName System.Windows.Forms
+Add-Type -AssemblyName System.Drawing
+
+Function Child ($Parentlabel)
+{
+
+$ChildForm = New-Object system.Windows.Forms.Form
+
+$textbox1 = New-Object System.Windows.Forms.TextBox
+$textbox1.Location = New-Object System.Drawing.Point(20,20)
+$ChildForm.Controls.Add($textbox1)
+
+$OKButton = New-Object System.Windows.Forms.Button
+$OKButton.Location = New-Object System.Drawing.Point(20,80)
+$OKButton.Text = "OK"
+$OKButton.DialogResult = [System.Windows.Forms.DialogResult]::OK
+$OKButton.Add_Click({$Parentlabel.text = $textbox1.Text})
+$ChildForm.AcceptButton = $OKButton
+$ChildForm.Controls.Add($OKButton)
+
+$ChildForm.ShowDialog()
+
+}
+
+#
+
+$ParentForm = New-Object system.Windows.Forms.Form
+
+$button1 = New-Object System.Windows.Forms.Button
+$button1.Location = New-Object System.Drawing.Point(20,20)
+$button1.Text = "Open Child" 
+$button1.Add_Click({Child $label1}) 
+$ParentForm.Controls.Add($button1)
+
+$label1 = New-Object System.Windows.Forms.Label
+$label1.Location = New-Object System.Drawing.Point(20,80)
+$label1.BorderStyle = "Fixed3D"
+$ParentForm.Controls.Add($label1)
+
+$ParentForm.ShowDialog()
 
 # Beispiel für Auslisting von Prozessen in einer DataGrid
 
@@ -590,3 +640,41 @@ Invoke-Sqlcmd3 -ServerInstance $Server -Database Master -Query $Requests | Out-G
 #Call the Function
 
 CreateForm
+
+###############################################
+ # add a Chart
+        $Chart = New-object System.Windows.Forms.DataVisualization.Charting.Chart
+        $Chart.Width = 150
+        $Chart.Height = 100
+        $Chart.Left = 20
+        $Chart.Top = 10
+       
+        # create a chartarea to draw on and add to chart
+        $ChartArea = New-Object System.Windows.Forms.DataVisualization.Charting.ChartArea
+        $Chart.ChartAreas.Add($ChartArea)
+
+
+        # Funktion für Anzeige von Speicherplatz (Noch nicht ganz richtig. Zeigt den Speicher von allen Laufwerken anstatt used und free space)
+        $Disks = Get-WMIObject Win32_LogicalDisk | Select-Object Size, FreeSpace
+                
+        $UsedSpace = @(foreach($Disk in $Disks) {($disk.size - $disk.freespace)/1gb})
+        $FreeSpace = @(foreach($Disk in $Disks) {$disk.freespace/1gb})
+        
+        
+        # add data to chart
+        [void]$Chart.Series.Add("Data")
+        $Chart.Series["Data"].Points.DataBindXY($UsedSpace, $FreeSpace)
+        
+
+        # set chart type
+        $Chart.Series["Data"].ChartType = [System.Windows.Forms.DataVisualization.Charting.SeriesChartType]::Pie
+
+
+        $Chart.Anchor = [System.Windows.Forms.AnchorStyles]::Bottom -bor [System.Windows.Forms.AnchorStyles]::Right -bor
+                [System.Windows.Forms.AnchorStyles]::Top -bor [System.Windows.Forms.AnchorStyles]::Left 
+
+        
+      
+
+          # add chart to tab
+            $Tab4.controls.add($Chart)
